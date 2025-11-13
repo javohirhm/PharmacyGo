@@ -3,33 +3,33 @@
 <section class="card" id="search">
     <div class="section-title">
         <h2>Discover nearby pharmacies</h2>
-        <span>Mock Google Maps view</span>
+        <span>Live Google Maps preview</span>
     </div>
-    <div class="filter-bar">
-        <div class="input-field">
-            <label for="search-term">Medicine or pharmacy</label>
-            <input id="search-term" placeholder="Amoxil 500mg" />
+    <div class="map-search-bar">
+        <div class="input-field" style="flex:1;">
+            <label for="map-pharmacy-search">Search pharmacies</label>
+            <input id="map-pharmacy-search" class="pg-input" placeholder="Search by name or district" />
         </div>
-        <div class="input-field">
-            <label for="search-area">Delivery area</label>
-            <input id="search-area" placeholder="Yunusabad" />
-        </div>
-        <button class="btn-primary">Search</button>
+        <small class="text-muted">Filter the list below without leaving the dashboard.</small>
     </div>
-    <div class="grid-2" style="margin-top: 1.5rem;">
-        <div class="map-card" style="border-radius: 1.5rem;">
-            <div class="map-grid" style="position: absolute; inset: 0;"></div>
-            {% for pharmacy in pharmacies %}
-                <span class="map-pin" style="top: {{ pharmacy.pin_top }}; left: {{ pharmacy.pin_left }};"></span>
-            {% endfor %}
+    <div class="map-search-layout">
+        <div class="map-card map-card--embed">
+            <iframe
+                title="Google Maps view"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d11977.29549042944!2d69.25248230000001!3d41.2994954!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38ae8b295cfb77d5%3A0x3f1c58e4458b4a5a!2sTashkent!5e0!3m2!1sen!2suz!4v1716222222!5m2!1sen!2suz"
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"></iframe>
         </div>
-        <div>
+        <div class="pharmacy-results">
             {% for pharmacy in pharmacies %}
-                <div class="card" style="padding: 1rem; margin-bottom: 1rem;">
+                <div class="card pharmacy-result" data-pharmacy-card data-pharmacy-name="{{ pharmacy.name|lower }}">
                     <strong>{{ pharmacy.name }}</strong>
                     <p class="text-muted">{{ pharmacy.distance_km }} km · rating {{ pharmacy.rating }}</p>
-                    <a class="btn-outline" href="{{ pharmacy.admin_url }}">View</a>
+                    <p class="text-muted">{{ pharmacy.address|default:"Address unavailable" }}</p>
+                    <a class="btn-outline" href="{% url 'pharmacy_detail' pharmacy.pk %}">View details</a>
                 </div>
+            {% empty %}
+                <p class="text-muted">No pharmacies found.</p>
             {% endfor %}
         </div>
     </div>
@@ -40,42 +40,48 @@
         <h2>Upload prescription & track delivery</h2>
         <span>Encrypted photo upload</span>
     </div>
-    <form class="filter-bar" method="post" action="{% url 'create_customer_order' %}">
-        {% csrf_token %}
-        <div class="input-field">
-            <label for="order-items">Medicines</label>
-            <input id="order-items" name="items" placeholder="Amoxil 500mg" required />
-        </div>
-        <div class="input-field">
-            <label for="order-pharmacy">Pharmacy</label>
-            <select id="order-pharmacy" name="pharmacy">
-                {% for pharmacy in pharmacies %}
-                    <option value="{{ pharmacy.pk }}">{{ pharmacy.name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <button class="btn-primary" type="submit">Place new delivery</button>
-        <a class="btn-outline" href="{% url 'customer_dashboard' %}">Refresh</a>
-    </form>
-    <div class="grid-2">
-        <div>
-            <div class="upload-zone">
-                <p>Drag & drop prescription photo</p>
-                <button class="btn-outline">Browse files</button>
-            </div>
-        </div>
-        <div>
-            <h3>Active orders</h3>
-            {% for order in orders %}
-                <div class="card" style="padding: 1rem; margin-bottom: 0.75rem;">
-                    <strong>{{ order.code }}</strong>
-                    <p class="text-muted">{{ order.items }}</p>
-                    <span class="badge info">{{ order.progress }}</span>
+    <div class="prescription-layout">
+        <div class="prescription-form-card">
+            <form class="prescription-form" method="post" action="{% url 'create_customer_order' %}">
+                {% csrf_token %}
+                <div class="pill-input-group">
+                    <div class="input-field">
+                        <label for="order-items">Medicines</label>
+                        <input id="order-items" name="items" placeholder="Amoxil 500mg" required />
+                    </div>
+                    <div class="input-field">
+                        <label for="order-pharmacy">Pharmacy</label>
+                        <select id="order-pharmacy" name="pharmacy">
+                            {% for pharmacy in pharmacies %}
+                                <option value="{{ pharmacy.pk }}">{{ pharmacy.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
-            {% empty %}
-                <p class="text-muted">No orders yet. Use the form to create one.</p>
-            {% endfor %}
-            <div class="timeline">
+                <div class="form-actions">
+                    <button class="btn-primary" type="submit">Place new delivery</button>
+                    <a class="btn-outline btn-ghost refresh-link" href="{% url 'customer_dashboard' %}">Refresh</a>
+                </div>
+            </form>
+        </div>
+        <div class="order-panel">
+            <div class="order-panel-header">
+                <h3>Active orders</h3>
+            </div>
+            <div class="order-list scroll-shell">
+                {% for order in orders %}
+                    <div class="card order-pill">
+                        <div>
+                            <strong>{{ order.code }}</strong>
+                            <p class="text-muted">{{ order.items }}</p>
+                        </div>
+                        <span class="badge info">{{ order.progress }}</span>
+                    </div>
+                {% empty %}
+                    <p class="text-muted">No orders yet. Use the form to create one.</p>
+                {% endfor %}
+            </div>
+            <div class="timeline pill-timeline">
                 <div class="timeline-step active">Requested</div>
                 <div class="timeline-step">Pharmacy preparing</div>
                 <div class="timeline-step">Courier assigned</div>
@@ -93,7 +99,7 @@
     <div class="grid-2">
         <div>
             <h3>Payment connectors</h3>
-            <div class="table-shell">
+            <div class="table-shell scroll-shell">
                 <table>
                     <thead>
                         <tr>
@@ -116,22 +122,47 @@
         </div>
         <div>
             <h3>Cards & color themes</h3>
-            <a class="btn-outline" href="{{ card_admin_add }}" style="margin-bottom: 1rem;">Add new card</a>
-            {% for card in cards %}
-                <div id="wallet-{{ card.pk }}" class="card card-theme" data-theme="{{ card.theme }}" style="color: #fff; margin-bottom: 1rem;">
-                    <div class="section-title" style="color: #fff;">
-                        <h2>{{ card.provider.name }}</h2>
-                        <span>••{{ card.last4 }}</span>
+            <details class="card card-inline-form" {% if card_form.errors %}open{% endif %}>
+                <summary>Add new card</summary>
+                <form method="post" action="{% url 'customer_dashboard' %}" class="card-form-grid">
+                    {% csrf_token %}
+                    <input type="hidden" name="form" value="payment-card">
+                    {% if card_form.non_field_errors %}
+                        <div class="form-error">{{ card_form.non_field_errors.0 }}</div>
+                    {% endif %}
+                    {% for field in card_form %}
+                        <div class="input-field">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% for error in field.errors %}
+                                <div class="form-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                    <div class="input-field" style="flex-basis: 100%;">
+                        <button class="btn-primary" type="submit">Save card</button>
                     </div>
-                    <p>{{ card.owner_name }}</p>
-                    <p>Limit: {{ card.spending_limit }}</p>
-                    <div class="swatch-row" style="margin-top: 1rem;">
-                        <button type="button" data-card-theme-trigger="ocean" data-target="wallet-{{ card.pk }}" style="background: linear-gradient(135deg,#1e63ff,#17d0ff);"></button>
-                        <button type="button" data-card-theme-trigger="sunrise" data-target="wallet-{{ card.pk }}" style="background: linear-gradient(135deg,#ffa16c,#ffda7b);"></button>
-                        <button type="button" data-card-theme-trigger="midnight" data-target="wallet-{{ card.pk }}" style="background: linear-gradient(135deg,#0f2027,#2c5364);"></button>
+                </form>
+            </details>
+            <div class="card-wallet-list scroll-shell">
+                {% for card in cards %}
+                    <div id="wallet-{{ card.pk }}" class="card card-theme" data-theme="{{ card.theme }}" style="color: #fff;">
+                        <div class="section-title" style="color: #fff;">
+                            <h2>{{ card.provider.name }}</h2>
+                            <span>••{{ card.last4 }}</span>
+                        </div>
+                        <p>{{ card.owner_name }}</p>
+                        <p>Limit: {{ card.spending_limit }}</p>
+                        <div class="swatch-row" style="margin-top: 1rem;">
+                            <button type="button" data-card-theme-trigger="ocean" data-target="wallet-{{ card.pk }}" style="background: linear-gradient(135deg,#1e63ff,#17d0ff);"></button>
+                            <button type="button" data-card-theme-trigger="sunrise" data-target="wallet-{{ card.pk }}" style="background: linear-gradient(135deg,#ffa16c,#ffda7b);"></button>
+                            <button type="button" data-card-theme-trigger="midnight" data-target="wallet-{{ card.pk }}" style="background: linear-gradient(135deg,#0f2027,#2c5364);"></button>
+                        </div>
                     </div>
-                </div>
-            {% endfor %}
+                {% empty %}
+                    <p class="text-muted">No saved cards yet.</p>
+                {% endfor %}
+            </div>
         </div>
     </div>
 </section>
@@ -149,4 +180,24 @@
         {% endfor %}
     </div>
 </section>
+{% endblock %}
+{% block extra_js %}
+    {{ block.super }}
+    <script>
+        (function () {
+            const searchInput = document.getElementById('map-pharmacy-search');
+            if (!searchInput) {
+                return;
+            }
+            const cards = Array.from(document.querySelectorAll('[data-pharmacy-card]'));
+            const filterList = () => {
+                const query = searchInput.value.trim().toLowerCase();
+                cards.forEach((card) => {
+                    const name = (card.dataset.pharmacyName || '').toLowerCase();
+                    card.style.display = !query || name.includes(query) ? '' : 'none';
+                });
+            };
+            searchInput.addEventListener('input', filterList);
+        })();
+    </script>
 {% endblock %}

@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.password_validation import validate_password
 
-from .models import Profile
+from .models import PaymentCard, Profile, StockItem
 
 User = get_user_model()
 
@@ -30,6 +30,8 @@ class SignUpForm(StyledFormMixin, forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["role"].widget = forms.HiddenInput()
+        self.fields["role"].initial = self.fields["role"].initial or Profile.Role.CUSTOMER
         placeholders = {
             "full_name": "Laylo Karimova",
             "email": "saodat@pharmacygo.uz",
@@ -53,11 +55,17 @@ class SignUpForm(StyledFormMixin, forms.Form):
 
         password1 = cleaned.get("password1")
         password2 = cleaned.get("password2")
+        organization = (cleaned.get("organization") or "").strip()
+        cleaned["organization"] = organization
 
         if role == Profile.Role.CUSTOMER and not phone:
             self.add_error("phone", "Customers must sign up with a phone number.")
         if role != Profile.Role.CUSTOMER and not email:
             self.add_error("email", "Doctors, admins, and distributors must use a work email.")
+        if role == Profile.Role.DISTRIBUTOR and not organization:
+            self.add_error("organization", "Distributors must list an organization or fleet name.")
+        if role != Profile.Role.DISTRIBUTOR:
+            cleaned["organization"] = ""
 
         identifier = phone if role == Profile.Role.CUSTOMER else email
         if identifier:
@@ -90,9 +98,54 @@ class SignUpForm(StyledFormMixin, forms.Form):
         profile = user.profile
         profile.role = role
         profile.phone = phone
-        profile.organization = organization
+        profile.organization = organization if role == Profile.Role.DISTRIBUTOR else ""
         profile.save()
         return user
+
+
+class PaymentCardForm(StyledFormMixin, forms.ModelForm):
+    THEME_CHOICES = [
+        ("ocean", "Ocean"),
+        ("sunrise", "Sunrise"),
+        ("midnight", "Midnight"),
+    ]
+
+    theme = forms.ChoiceField(choices=THEME_CHOICES)
+
+    class Meta:
+        model = PaymentCard
+        fields = ["owner_name", "provider", "last4", "theme", "spending_limit"]
+        widgets = {
+            "last4": forms.TextInput(attrs={"maxlength": 4, "placeholder": "1234"}),
+            "spending_limit": forms.TextInput(attrs={"placeholder": "25,000,000 UZS"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["owner_name"].widget.attrs.setdefault("placeholder", "Laylo Karimova")
+        self._apply_styles()
+
+
+class StockItemForm(StyledFormMixin, forms.ModelForm):
+    class Meta:
+        model = StockItem
+        fields = ["sku", "name", "quantity", "status"]
+        labels = {
+            "sku": "SKU",
+            "name": "Medicine",
+            "quantity": "Qty",
+            "status": "Status",
+        }
+        widgets = {
+            "sku": forms.TextInput(attrs={"placeholder": "AMX-500"}),
+            "name": forms.TextInput(attrs={"placeholder": "Amoxil 500mg"}),
+            "quantity": forms.NumberInput(attrs={"min": 0}),
+            "status": forms.TextInput(attrs={"placeholder": "Healthy"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._apply_styles()
 
 
 class IdentifierAuthenticationForm(StyledFormMixin, AuthenticationForm):
@@ -103,7 +156,8 @@ class IdentifierAuthenticationForm(StyledFormMixin, AuthenticationForm):
         super().__init__(request=request, *args, **kwargs)
         self.fields["username"].widget.attrs.setdefault("placeholder", "saodat@pharmacygo.uz or +998 90 123 45 67")
         self.fields["password"].widget.attrs.setdefault("placeholder", "••••••••")
-        self.fields["role_hint"].widget.attrs.setdefault("class", "pg-input")
+        self.fields["role_hint"].widget = forms.HiddenInput()
+        self.fields["role_hint"].initial = self.fields["role_hint"].initial or Profile.Role.CUSTOMER
         self._apply_styles()
 
     def clean(self):

@@ -1,83 +1,127 @@
 {% extends 'base.html' %}
 {% block content %}
-<section class="card">
-    <div class="section-title">
-        <h2>Create your PharmacyGo account</h2>
-        <span>Secure onboarding for every role</span>
-    </div>
-    <div class="responsive-columns">
-        <div class="card" style="background: linear-gradient(135deg, rgba(30,99,255,0.08), rgba(17,58,141,0.15));">
-            <h3>Sign up</h3>
-            <p>Customers use phone numbers, while Doctors/Admins/Distributors authenticate with email.</p>
-            <form method="post" class="form-grid">
-                {% csrf_token %}
-                {% if form.non_field_errors %}
-                    <div class="form-error">{{ form.non_field_errors.0 }}</div>
-                {% endif %}
-                <div class="input-field">
-                    <label for="{{ form.role.id_for_label }}">{{ form.role.label }}</label>
-                    {{ form.role }}
-                    {% for error in form.role.errors %}
-                        <div class="form-error">{{ error }}</div>
-                    {% endfor %}
-                </div>
-                <div class="input-field">
-                    <label for="{{ form.full_name.id_for_label }}">{{ form.full_name.label }}</label>
-                    {{ form.full_name }}
-                    {% for error in form.full_name.errors %}
-                        <div class="form-error">{{ error }}</div>
-                    {% endfor %}
-                </div>
-                <div class="input-field">
-                    <label for="{{ form.phone.id_for_label }}">{{ form.phone.label }}</label>
-                    {{ form.phone }}
-                    {% for error in form.phone.errors %}
-                        <div class="form-error">{{ error }}</div>
-                    {% endfor %}
-                </div>
-                <div class="input-field">
-                    <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
-                    {{ form.email }}
-                    {% for error in form.email.errors %}
-                        <div class="form-error">{{ error }}</div>
-                    {% endfor %}
-                </div>
-                <div class="input-field">
-                    <label for="{{ form.organization.id_for_label }}">{{ form.organization.label }}</label>
-                    {{ form.organization }}
-                    {% for error in form.organization.errors %}
-                        <div class="form-error">{{ error }}</div>
-                    {% endfor %}
-                </div>
-                <div class="input-field">
-                    <label for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
-                    {{ form.password1 }}
-                    {% for error in form.password1.errors %}
-                        <div class="form-error">{{ error }}</div>
-                    {% endfor %}
-                </div>
-                <div class="input-field">
-                    <label for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
-                    {{ form.password2 }}
-                    {% for error in form.password2.errors %}
-                        <div class="form-error">{{ error }}</div>
-                    {% endfor %}
-                </div>
-                <div class="input-field" style="flex-basis: 100%">
-                    <button class="btn-primary" type="submit">Create workspace</button>
-                </div>
-            </form>
+<section class="auth-shell">
+    <div class="auth-card">
+        <div class="auth-icon">💊</div>
+        <h1>PharmacyGo</h1>
+        <p class="auth-subtitle">Create your account</p>
+        {% with selected_role=form.role.value|default:form.role.field.initial|default:'customer' %}
+        <div class="auth-tabs" data-signup-tabs data-target-input="{{ form.role.id_for_label }}" data-selected-role="{{ selected_role }}">
+            {% for value, label in form.role.field.choices %}
+                <button type="button" class="auth-tab{% if value == selected_role %} active{% endif %}" data-signup-role="{{ value }}" data-signup-label="{{ label }}">{{ label }}</button>
+            {% endfor %}
         </div>
-        <div class="card">
-            <h3>Onboarding checklist</h3>
-            <ul style="list-style:none; padding-left:0; margin:0; display:flex; flex-direction:column; gap:0.75rem;">
-                <li>• Customers receive SMS + delivery updates.</li>
-                <li>• Doctors verify prescriptions and chat in real-time.</li>
-                <li>• Distributors sync stock and live delivery tasks.</li>
-                <li>• Admins approve pharmacies and monitor KPIs.</li>
-            </ul>
-            <p class="text-muted" style="margin-top:1rem;">Already approved? <a href="{% url 'login' %}">Log in instead</a>.</p>
+        {% endwith %}
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            {{ form.role }}
+            {% if form.non_field_errors %}
+                <div class="form-error">{{ form.non_field_errors.0 }}</div>
+            {% endif %}
+            <div class="input-field">
+                <label for="{{ form.full_name.id_for_label }}">Full name</label>
+                {{ form.full_name }}
+                {% for error in form.full_name.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="input-field" data-signup-phone>
+                <label for="{{ form.phone.id_for_label }}">Phone Number</label>
+                {{ form.phone }}
+                {% for error in form.phone.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="input-field" data-signup-email>
+                <label for="{{ form.email.id_for_label }}">Email</label>
+                {{ form.email }}
+                {% for error in form.email.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="input-field" data-signup-org>
+                <label for="{{ form.organization.id_for_label }}">Organization</label>
+                {{ form.organization }}
+                {% for error in form.organization.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="input-field">
+                <label for="{{ form.password1.id_for_label }}">Password</label>
+                {{ form.password1 }}
+                {% for error in form.password1.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="input-field">
+                <label for="{{ form.password2.id_for_label }}">Confirm password</label>
+                {{ form.password2 }}
+                {% for error in form.password2.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <button class="btn-primary auth-submit" type="submit" data-signup-submit>Sign up</button>
+        </form>
+        <div class="auth-links">
+            <p>Already have an account? <a href="{% url 'login' %}">Login</a></p>
         </div>
     </div>
 </section>
+{% endblock %}
+{% block extra_js %}
+    {{ block.super }}
+    <script>
+        (function () {
+            const tabs = document.querySelectorAll('[data-signup-role]');
+            const hiddenInput = document.getElementById('{{ form.role.id_for_label }}') || document.getElementById('id_role');
+            const phoneField = document.querySelector('[data-signup-phone]');
+            const emailField = document.querySelector('[data-signup-email]');
+            const orgField = document.querySelector('[data-signup-org]');
+            const phoneInput = document.getElementById('{{ form.phone.id_for_label }}');
+            const emailInput = document.getElementById('{{ form.email.id_for_label }}');
+            const orgInput = document.getElementById('{{ form.organization.id_for_label }}');
+            const submitBtn = document.querySelector('[data-signup-submit]');
+            if (!hiddenInput || !tabs.length) {
+                return;
+            }
+            const setVisibility = (role, labelText) => {
+                const isCustomer = role === 'customer';
+                const isDistributor = role === 'distributor';
+                if (phoneField) {
+                    phoneField.style.display = isCustomer ? '' : 'none';
+                }
+                if (phoneInput) {
+                    phoneInput.required = isCustomer;
+                }
+                if (emailField) {
+                    emailField.style.display = isCustomer ? 'none' : '';
+                }
+                if (emailInput) {
+                    emailInput.required = !isCustomer;
+                }
+                if (orgField) {
+                    orgField.style.display = isDistributor ? '' : 'none';
+                }
+                if (orgInput) {
+                    orgInput.required = isDistributor;
+                }
+                if (submitBtn) {
+                    const label = (labelText || role).toLowerCase();
+                    submitBtn.textContent = `Sign up as ${label}`;
+                }
+            };
+            const setActive = (role, labelText) => {
+                hiddenInput.value = role;
+                tabs.forEach((tab) => {
+                    tab.classList.toggle('active', tab.dataset.signupRole === role);
+                });
+                setVisibility(role, labelText);
+            };
+            tabs.forEach((tab) => {
+                tab.addEventListener('click', () => setActive(tab.dataset.signupRole, tab.dataset.signupLabel));
+            });
+            const initialTab = document.querySelector('[data-signup-role].active');
+            setActive(hiddenInput.value || 'customer', initialTab ? initialTab.dataset.signupLabel : '');
+        })();
+    </script>
 {% endblock %}

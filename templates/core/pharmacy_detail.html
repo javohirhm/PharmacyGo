@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="card">
+    <div class="section-title">
+        <div>
+            <h2>{{ pharmacy.name }}</h2>
+            <span>{{ pharmacy.address|default:"No address on record" }}</span>
+        </div>
+        <a class="btn-outline" href="{% url 'customer_dashboard' %}">← Back to customer dashboard</a>
+    </div>
+    <div class="grid-2">
+        <div>
+            <p class="text-muted">Distance · {{ pharmacy.distance_km }} km</p>
+            <p class="text-muted">Rating · {{ pharmacy.rating }}</p>
+            <div class="map-card map-card--embed" style="min-height: 280px;">
+                <iframe
+                    title="Map view for {{ pharmacy.name }}"
+                    loading="lazy"
+                    allowfullscreen
+                    referrerpolicy="no-referrer-when-downgrade"
+                    src="https://www.google.com/maps?q={{ pharmacy.address|default:pharmacy.name|urlencode }}&output=embed">
+                </iframe>
+            </div>
+        </div>
+        <div>
+            <h3>Recent orders</h3>
+            {% for order in recent_orders %}
+                <div class="card" style="padding: 1rem; margin-bottom: 0.75rem;">
+                    <strong>{{ order.code }}</strong>
+                    <p class="text-muted">{{ order.items }}</p>
+                    <div class="badge info">{{ order.get_status_display }}</div>
+                </div>
+            {% empty %}
+                <p class="text-muted">No orders associated with this pharmacy yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

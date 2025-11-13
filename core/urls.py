@@ -15,7 +15,9 @@ urlpatterns = [
     path('dashboard/doctor/chat/', views.doctor_chat_message, name='doctor_chat_message'),
     path('dashboard/customer/', views.customer_dashboard, name='customer_dashboard'),
     path('dashboard/customer/orders/create/', views.create_customer_order, name='create_customer_order'),
+    path('dashboard/customer/pharmacies/<int:pk>/', views.pharmacy_detail, name='pharmacy_detail'),
     path('dashboard/distributor/', views.distributor_dashboard, name='distributor_dashboard'),
     path('dashboard/distributor/tasks/<int:pk>/<str:action>/', views.delivery_task_action, name='delivery_task_action'),
     path('dashboard/distributor/status/<int:pk>/complete/', views.distributor_status_action, name='distributor_status_action'),
+    path('dashboard/distributor/status/<int:pk>/update/', views.distributor_status_update, name='distributor_status_update'),
 ]

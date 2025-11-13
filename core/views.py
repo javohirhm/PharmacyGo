@@ -10,7 +10,7 @@ from django.utils.crypto import get_random_string
 
 from . import data
 from .bootstrap import ensure_seed_records
-from .forms import IdentifierAuthenticationForm, SignUpForm
+from .forms import IdentifierAuthenticationForm, PaymentCardForm, SignUpForm, StockItemForm
 from .models import (
     ChatMessage,
     DeliveryTask,
@@ -176,6 +176,15 @@ def doctor_dashboard(request):
 @role_required(Profile.Role.CUSTOMER)
 def customer_dashboard(request):
     ensure_seed_records()
+    card_form = PaymentCardForm()
+    if request.method == "POST" and request.POST.get("form") == "payment-card":
+        card_form = PaymentCardForm(request.POST)
+        if card_form.is_valid():
+            card_form.save()
+            messages.success(request, "New payment card added to your wallet.")
+            return redirect("customer_dashboard")
+        messages.error(request, "Please fix the errors below and resubmit the card form.")
+
     context = _context(
         request,
         page_title="Customer journey",
@@ -184,8 +193,7 @@ def customer_dashboard(request):
         payments=PaymentProvider.objects.all(),
         cards=PaymentCard.objects.select_related("provider").all(),
         notifications=Notification.objects.filter(audience=Profile.Role.CUSTOMER).order_by("-created_at")[:5],
-        admin_change_url=_admin_change_url,
-        card_admin_add=reverse("admin:core_paymentcard_add"),
+        card_form=card_form,
     )
     return render(request, "core/customer_dashboard.html", context)
 
@@ -193,6 +201,24 @@ def customer_dashboard(request):
 @role_required(Profile.Role.DISTRIBUTOR)
 def distributor_dashboard(request):
     ensure_seed_records()
+    stock_form = StockItemForm()
+    if request.method == "POST" and request.POST.get("form") == "stock-item":
+        stock_form = StockItemForm(request.POST)
+        if stock_form.is_valid():
+            stock_form.save()
+            messages.success(request, "SKU added to stock health.")
+            return redirect("distributor_dashboard")
+        messages.error(request, "Please correct the stock form errors.")
+
+    status_options = []
+    seen = set()
+    preset_statuses = ["Awaiting pickup", "In progress", "Delivered", "Delayed"]
+    for label in preset_statuses + list(DistributorStatus.objects.values_list("status", flat=True)):
+        normalized = (label or "").strip()
+        if normalized and normalized not in seen:
+            seen.add(normalized)
+            status_options.append(normalized)
+
     context = _context(
         request,
         page_title="Distributor ops",
@@ -200,6 +226,8 @@ def distributor_dashboard(request):
         tasks=DeliveryTask.objects.select_related("pharmacy").all(),
         timeline=TimelineEvent.objects.order_by("created_at"),
         status_board=DistributorStatus.objects.all(),
+        stock_form=stock_form,
+        status_options=status_options,
     )
     return render(request, "core/distributor_dashboard.html", context)
 
@@ -335,3 +363,30 @@ def create_customer_order(request):
         )
         messages.success(request, "New delivery request created.")
     return _redirect_back(request, "customer_dashboard")
+
+
+@role_required(Profile.Role.CUSTOMER)
+def pharmacy_detail(request, pk):
+    ensure_seed_records()
+    pharmacy = get_object_or_404(Pharmacy, pk=pk)
+    context = _context(
+        request,
+        page_title=f"{pharmacy.name} · Details",
+        pharmacy=pharmacy,
+        recent_orders=pharmacy.orders.order_by("-created_at")[:5],
+    )
+    return render(request, "core/pharmacy_detail.html", context)
+
+
+@role_required(Profile.Role.DISTRIBUTOR)
+def distributor_status_update(request, pk):
+    status_entry = get_object_or_404(DistributorStatus, pk=pk)
+    if request.method == "POST":
+        new_status = request.POST.get("status", "").strip()
+        if new_status:
+            status_entry.status = new_status
+            status_entry.save()
+            messages.success(request, f"{status_entry.order_code} updated to {new_status}.")
+        else:
+            messages.error(request, "Select a valid status option.")
+    return _redirect_back(request, "distributor_dashboard")
