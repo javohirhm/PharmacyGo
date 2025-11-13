@@ -1,0 +1,60 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PharmacyGo | {{ page_title|default:"Connected Care" }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="theme-shell" data-theme="light">
+    <div class="global-shell">
+        <header class="global-nav">
+            <div class="logo">PharmacyGo</div>
+            <nav class="global-links">
+                {% if request.user.is_authenticated and primary_dashboard %}
+                    <a href="{% url primary_dashboard %}">Dashboard</a>
+                    <a href="{% url 'logout' %}">Logout</a>
+                {% else %}
+                    <a href="{% url 'login' %}">Login</a>
+                    <a href="{% url 'signup' %}">Sign up</a>
+                {% endif %}
+            </nav>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+                    <span class="icon-sun">☀️</span>
+                    <span class="icon-moon">🌙</span>
+                </button>
+                <div class="profile-pill">
+                    <span class="status-dot"></span>
+                    <span>Hey, {{ active_user|default:"Alex" }}</span>
+                </div>
+            </div>
+        </header>
+        {% if messages %}
+            <div class="message-stack">
+                {% for message in messages %}
+                    <div class="alert-message {{ message.tags|default:'info' }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        <main class="page-shell">
+            {% block content %}{% endblock %}
+        </main>
+        <footer class="global-footer">
+            <p>© {{ current_year|default:2025 }} PharmacyGo · Unified care & delivery</p>
+            <div class="footer-links">
+                <a href="#">Privacy</a>
+                <a href="#">Security</a>
+                <a href="#">Status</a>
+            </div>
+        </footer>
+    </div>
+    <script src="{% static 'js/theme.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

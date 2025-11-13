@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="role-shell">
+    <nav class="role-nav">
+        <a href="#overview" data-role-link data-role-group="admin-nav" class="active">Overview</a>
+        <a href="#orders" data-role-link data-role-group="admin-nav">Orders</a>
+        <a href="#users" data-role-link data-role-group="admin-nav">Users</a>
+        <a href="#approvals" data-role-link data-role-group="admin-nav">Approvals</a>
+    </nav>
+    <div class="role-content">
+        <section id="overview" class="card">
+            <div class="section-title">
+                <h2>Admin dashboard</h2>
+                <span>Live platform health</span>
+            </div>
+            <div class="grid-3">
+                {% for kpi in admin_kpis %}
+                    <div class="kpi-card">
+                        <span class="text-muted">{{ kpi.label }}</span>
+                        <strong>{{ kpi.value }}</strong>
+                        <span class="badge info">{{ kpi.delta }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="chart-bars">
+                <div class="chart-bar" style="height: 160px;" data-label="Delivered">
+                    <span>82%</span>
+                </div>
+                <div class="chart-bar" style="height: 120px; background: linear-gradient(180deg,#17d0ff,rgba(23,208,255,0.4));" data-label="In progress">
+                    <span>45</span>
+                </div>
+                <div class="chart-bar" style="height: 80px; background: linear-gradient(180deg,#ffae42,rgba(255,174,66,0.4));" data-label="Pending">
+                    <span>17</span>
+                </div>
+            </div>
+            <div class="grid-2" style="margin-top: 1.5rem;">
+                <div>
+                    <h3>Fulfillment mix</h3>
+                    <div class="timeline">
+                        <div class="timeline-step active">
+                            <strong>68%</strong>
+                            <p>Delivered</p>
+                        </div>
+                        <div class="timeline-step">
+                            <strong>21%</strong>
+                            <p>In progress</p>
+                        </div>
+                        <div class="timeline-step">
+                            <strong>11%</strong>
+                            <p>Awaiting approval</p>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h3>Alerts & notifications</h3>
+                    <div class="notification-list">
+                        <div class="notification-item">4 new pharmacies awaiting document review.</div>
+                        <div class="notification-item">Distributor Flow Logistics reported an ETA delay.</div>
+                        <div class="notification-item">Doctor onboarding SLA is on track (12 min avg).</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="orders" class="card">
+            <div class="section-title">
+                <h2>Recent orders</h2>
+                <span>Update or cancel deliveries</span>
+            </div>
+            <div class="table-shell">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Customer</th>
+                            <th>Pharmacy</th>
+                            <th>Status</th>
+                            <th>ETA</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                            <tr>
+                                <td>{{ order.code }}</td>
+                                <td>{{ order.customer_name }}</td>
+                                <td>{{ order.pharmacy.name }}</td>
+                                <td>{{ order.get_status_display }}</td>
+                                <td>{{ order.eta_text|default:"—" }}</td>
+                                <td class="table-actions">
+                                    <form method="post" action="{% url 'order_action' order.pk 'deliver' %}">
+                                        {% csrf_token %}
+                                        <button class="btn-outline" type="submit">Mark delivered</button>
+                                    </form>
+                                    <form method="post" action="{% url 'order_action' order.pk 'cancel' %}">
+                                        {% csrf_token %}
+                                        <button class="btn-ghost" type="submit">Cancel</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="6">No orders yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="users" class="card">
+            <div class="section-title">
+                <h2>User management</h2>
+                <span>Customers · Doctors · Distributors</span>
+            </div>
+            <div class="grid-3">
+                <div>
+                    <h3>Customers</h3>
+                    <div class="table-shell">
+                        <table>
+                            <tbody>
+                                {% for user in user_segments.customers %}
+                                    <tr>
+                                        <td><strong>{{ user.name }}</strong><br><small>{{ user.contact }}</small></td>
+                                        <td>{{ user.meta }}</td>
+                                        <td><a class="btn-outline" href="{{ user.admin_url }}">Manage</a></td>
+                                    </tr>
+                                {% empty %}
+                                    <tr><td colspan="3">Invite customers to onboard.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div>
+                    <h3>Doctors</h3>
+                    <div class="table-shell">
+                        <table>
+                            <tbody>
+                                {% for doctor in user_segments.doctors %}
+                                    <tr>
+                                        <td><strong>{{ doctor.name }}</strong><br><small>{{ doctor.contact }}</small></td>
+                                        <td>{{ doctor.meta }}</td>
+                                        <td><a class="btn-outline" href="{{ doctor.admin_url }}">Assign</a></td>
+                                    </tr>
+                                {% empty %}
+                                    <tr><td colspan="3">Add doctors from admin.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div>
+                    <h3>Distributors</h3>
+                    <div class="table-shell">
+                        <table>
+                            <tbody>
+                                {% for distributor in user_segments.distributors %}
+                                    <tr>
+                                        <td><strong>{{ distributor.name }}</strong><br><small>{{ distributor.contact }}</small></td>
+                                        <td>{{ distributor.meta }}</td>
+                                        <td><a class="btn-outline" href="{{ distributor.admin_url }}">Ping</a></td>
+                                    </tr>
+                                {% empty %}
+                                    <tr><td colspan="3">Add fleet partners via admin.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="approvals" class="card">
+            <div class="section-title">
+                <h2>Pharmacy approvals</h2>
+                <span>Review licenses & compliance</span>
+            </div>
+            <div class="table-shell">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Pharmacy</th>
+                            <th>Submitted</th>
+                            <th>Docs</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for request in approvals %}
+                            <tr>
+                                <td>{{ request.pharmacy_name }}</td>
+                                <td>{{ request.created_at|timesince }} ago</td>
+                                <td>{{ request.documents }}</td>
+                                <td>{{ request.get_status_display }}</td>
+                                <td class="table-actions">
+                                    <form method="post" action="{% url 'application_action' request.pk 'approve' %}">
+                                        {% csrf_token %}
+                                        <button class="btn-primary" type="submit">Approve</button>
+                                    </form>
+                                    <form method="post" action="{% url 'application_action' request.pk 'reject' %}">
+                                        {% csrf_token %}
+                                        <button class="btn-ghost" type="submit">Reject</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="5">No pending applications.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="role-shell">
+    <nav class="role-nav">
+        <a href="#stock" data-role-link data-role-group="distributor-nav" class="active">Stock</a>
+        <a href="#tasks" data-role-link data-role-group="distributor-nav">Deliveries</a>
+        <a href="#status" data-role-link data-role-group="distributor-nav">Status</a>
+    </nav>
+    <div class="role-content">
+        <section id="stock" class="card">
+            <div class="section-title">
+                <h2>Stock health</h2>
+                <span>Track medicine levels</span>
+            </div>
+            <div class="table-shell">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>SKU</th>
+                            <th>Medicine</th>
+                            <th>Qty</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in stock %}
+                            <tr>
+                                <td>{{ item.sku }}</td>
+                                <td>{{ item.name }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>{{ item.status }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="4">Update inventory inside admin.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="tasks" class="card">
+            <div class="section-title">
+                <h2>Delivery requests</h2>
+                <span>Accept · Reject · Update</span>
+            </div>
+            <div class="grid-2">
+                {% for task in tasks %}
+                    <div class="card" style="padding: 1.25rem;">
+                        <strong>{{ task.code }}</strong>
+                        <p class="text-muted">{{ task.pharmacy.name }}</p>
+                        <p>{{ task.address }}</p>
+                        <p>ETA {{ task.eta_text }}</p>
+                        <span class="badge info">{{ task.get_status_display }}</span>
+                        <div class="filter-bar">
+                            <form method="post" action="{% url 'delivery_task_action' task.pk 'accept' %}">
+                                {% csrf_token %}
+                                <button class="btn-primary" type="submit">Accept</button>
+                            </form>
+                            <form method="post" action="{% url 'delivery_task_action' task.pk 'reject' %}">
+                                {% csrf_token %}
+                                <button class="btn-ghost" type="submit">Reject</button>
+                            </form>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-muted">No delivery tasks assigned.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section id="status" class="card">
+            <div class="section-title">
+                <h2>Order status updates</h2>
+                <span>Real-time timeline</span>
+            </div>
+            <div class="timeline">
+                {% for step in timeline %}
+                    <div class="timeline-step{% if step.is_active %} active{% endif %}">
+                        <strong>{{ step.label }}</strong>
+                        <p class="text-muted">{{ step.time_text }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="table-shell" style="margin-top: 1.5rem;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Order</th>
+                            <th>Pharmacy</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for status in status_board %}
+                            <tr>
+                                <td>{{ status.order_code }}</td>
+                                <td>{{ status.pharmacy }}</td>
+                                <td>{{ status.status }}</td>
+                                <td class="table-actions">
+                                    <a class="btn-outline" href="{{ status.admin_url }}">Update</a>
+                                    <form method="post" action="{% url 'distributor_status_action' status.pk %}">
+                                        {% csrf_token %}
+                                        <button class="btn-ghost" type="submit">Mark delivered</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</section>
+{% endblock %}

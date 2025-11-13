@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="card" id="search">
+    <div class="section-title">
+        <h2>Discover nearby pharmacies</h2>
+        <span>Mock Google Maps view</span>
+    </div>
+    <div class="filter-bar">
+        <div class="input-field">
+            <label for="search-term">Medicine or pharmacy</label>
+            <input id="search-term" placeholder="Amoxil 500mg" />
+        </div>
+        <div class="input-field">
+            <label for="search-area">Delivery area</label>
+            <input id="search-area" placeholder="Yunusabad" />
+        </div>
+        <button class="btn-primary">Search</button>
+    </div>
+    <div class="grid-2" style="margin-top: 1.5rem;">
+        <div class="map-card" style="border-radius: 1.5rem;">
+            <div class="map-grid" style="position: absolute; inset: 0;"></div>
+            {% for pharmacy in pharmacies %}
+                <span class="map-pin" style="top: {{ pharmacy.pin_top }}; left: {{ pharmacy.pin_left }};"></span>
+            {% endfor %}
+        </div>
+        <div>
+            {% for pharmacy in pharmacies %}
+                <div class="card" style="padding: 1rem; margin-bottom: 1rem;">
+                    <strong>{{ pharmacy.name }}</strong>
+                    <p class="text-muted">{{ pharmacy.distance_km }} km · rating {{ pharmacy.rating }}</p>
+                    <a class="btn-outline" href="{{ pharmacy.admin_url }}">View</a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="card" id="prescription">
+    <div class="section-title">
+        <h2>Upload prescription & track delivery</h2>
+        <span>Encrypted photo upload</span>
+    </div>
+    <form class="filter-bar" method="post" action="{% url 'create_customer_order' %}">
+        {% csrf_token %}
+        <div class="input-field">
+            <label for="order-items">Medicines</label>
+            <input id="order-items" name="items" placeholder="Amoxil 500mg" required />
+        </div>
+        <div class="input-field">
+            <label for="order-pharmacy">Pharmacy</label>
+            <select id="order-pharmacy" name="pharmacy">
+                {% for pharmacy in pharmacies %}
+                    <option value="{{ pharmacy.pk }}">{{ pharmacy.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button class="btn-primary" type="submit">Place new delivery</button>
+        <a class="btn-outline" href="{% url 'customer_dashboard' %}">Refresh</a>
+    </form>
+    <div class="grid-2">
+        <div>
+            <div class="upload-zone">
+                <p>Drag & drop prescription photo</p>
+                <button class="btn-outline">Browse files</button>
+            </div>
+        </div>
+        <div>
+            <h3>Active orders</h3>
+            {% for order in orders %}
+                <div class="card" style="padding: 1rem; margin-bottom: 0.75rem;">
+                    <strong>{{ order.code }}</strong>
+                    <p class="text-muted">{{ order.items }}</p>
+                    <span class="badge info">{{ order.progress }}</span>
+                </div>
+            {% empty %}
+                <p class="text-muted">No orders yet. Use the form to create one.</p>
+            {% endfor %}
+            <div class="timeline">
+                <div class="timeline-step active">Requested</div>
+                <div class="timeline-step">Pharmacy preparing</div>
+                <div class="timeline-step">Courier assigned</div>
+                <div class="timeline-step">Delivered</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="card" id="payments">
+    <div class="section-title">
+        <h2>Payments & cards</h2>
+        <span>Uzum · Uzcard · Humo</span>
+    </div>
+    <div class="grid-2">
+        <div>
+            <h3>Payment connectors</h3>
+            <div class="table-shell">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Provider</th>
+                            <th>Status</th>
+                            <th>Fee</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                            <tr>
+                                <td>{{ payment.name }}</td>
+                                <td>{{ payment.status }}</td>
+                                <td>{{ payment.fee }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div>
+            <h3>Cards & color themes</h3>
+            <a class="btn-outline" href="{{ card_admin_add }}" style="margin-bottom: 1rem;">Add new card</a>
+            {% for card in cards %}
+                <div id="wallet-{{ card.pk }}" class="card card-theme" data-theme="{{ card.theme }}" style="color: #fff; margin-bottom: 1rem;">
+                    <div class="section-title" style="color: #fff;">
+                        <h2>{{ card.provider.name }}</h2>
+                        <span>••{{ card.last4 }}</span>
+                    </div>
+                    <p>{{ card.owner_name }}</p>
+                    <p>Limit: {{ card.spending_limit }}</p>
+                    <div class="swatch-row" style="margin-top: 1rem;">
+                        <button type="button" data-card-theme-trigger="ocean" data-target="wallet-{{ card.pk }}" style="background: linear-gradient(135deg,#1e63ff,#17d0ff);"></button>
+                        <button type="button" data-card-theme-trigger="sunrise" data-target="wallet-{{ card.pk }}" style="background: linear-gradient(135deg,#ffa16c,#ffda7b);"></button>
+                        <button type="button" data-card-theme-trigger="midnight" data-target="wallet-{{ card.pk }}" style="background: linear-gradient(135deg,#0f2027,#2c5364);"></button>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="card" id="notifications">
+    <div class="section-title">
+        <h2>Notifications</h2>
+        <span>Delivery & prescriptions</span>
+    </div>
+    <div class="notification-list">
+        {% for notification in notifications %}
+            <div class="notification-item">{{ notification.message }}</div>
+        {% empty %}
+            <p class="text-muted">No notifications.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

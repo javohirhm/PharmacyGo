@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="card">
+    <div class="section-title">
+        <h2>Create your PharmacyGo account</h2>
+        <span>Secure onboarding for every role</span>
+    </div>
+    <div class="responsive-columns">
+        <div class="card" style="background: linear-gradient(135deg, rgba(30,99,255,0.08), rgba(17,58,141,0.15));">
+            <h3>Sign up</h3>
+            <p>Customers use phone numbers, while Doctors/Admins/Distributors authenticate with email.</p>
+            <form method="post" class="form-grid">
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    <div class="form-error">{{ form.non_field_errors.0 }}</div>
+                {% endif %}
+                <div class="input-field">
+                    <label for="{{ form.role.id_for_label }}">{{ form.role.label }}</label>
+                    {{ form.role }}
+                    {% for error in form.role.errors %}
+                        <div class="form-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="input-field">
+                    <label for="{{ form.full_name.id_for_label }}">{{ form.full_name.label }}</label>
+                    {{ form.full_name }}
+                    {% for error in form.full_name.errors %}
+                        <div class="form-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="input-field">
+                    <label for="{{ form.phone.id_for_label }}">{{ form.phone.label }}</label>
+                    {{ form.phone }}
+                    {% for error in form.phone.errors %}
+                        <div class="form-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="input-field">
+                    <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                    {{ form.email }}
+                    {% for error in form.email.errors %}
+                        <div class="form-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="input-field">
+                    <label for="{{ form.organization.id_for_label }}">{{ form.organization.label }}</label>
+                    {{ form.organization }}
+                    {% for error in form.organization.errors %}
+                        <div class="form-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="input-field">
+                    <label for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
+                    {{ form.password1 }}
+                    {% for error in form.password1.errors %}
+                        <div class="form-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="input-field">
+                    <label for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
+                    {{ form.password2 }}
+                    {% for error in form.password2.errors %}
+                        <div class="form-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="input-field" style="flex-basis: 100%">
+                    <button class="btn-primary" type="submit">Create workspace</button>
+                </div>
+            </form>
+        </div>
+        <div class="card">
+            <h3>Onboarding checklist</h3>
+            <ul style="list-style:none; padding-left:0; margin:0; display:flex; flex-direction:column; gap:0.75rem;">
+                <li>• Customers receive SMS + delivery updates.</li>
+                <li>• Doctors verify prescriptions and chat in real-time.</li>
+                <li>• Distributors sync stock and live delivery tasks.</li>
+                <li>• Admins approve pharmacies and monitor KPIs.</li>
+            </ul>
+            <p class="text-muted" style="margin-top:1rem;">Already approved? <a href="{% url 'login' %}">Log in instead</a>.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

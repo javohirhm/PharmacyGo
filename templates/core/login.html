@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="card responsive-columns login-hero">
+    <div>
+        <div class="badge info">Unified access</div>
+        <h1>Log into PharmacyGo</h1>
+        <p>Select a role then authenticate with your phone (customers) or email (professionals).</p>
+        <form method="post" class="form-grid" aria-label="Unified login">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="form-error">{{ form.non_field_errors.0 }}</div>
+            {% endif %}
+            <div class="input-field" style="flex-basis: 100%;">
+                <label for="{{ form.role_hint.id_for_label }}">{{ form.role_hint.label }}</label>
+                {{ form.role_hint }}
+                {% for error in form.role_hint.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="input-field">
+                <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+                {{ form.username }}
+                {% for error in form.username.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="input-field">
+                <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+                {{ form.password }}
+                {% for error in form.password.errors %}
+                    <div class="form-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="input-field" style="flex-basis: 100%">
+                <button class="btn-primary" type="submit">Continue to dashboard</button>
+            </div>
+        </form>
+        <div class="filter-bar" style="margin-top: 1rem;">
+            <a href="{% url 'forgot_password' %}">Forgot password?</a>
+            <a href="{% url 'signup' %}">Create a new account</a>
+        </div>
+    </div>
+    <div>
+        <h3>Live coverage</h3>
+        <p>Active couriers delivering across Tashkent. Track prescriptions, payments, and delivery ETA in one place.</p>
+        <div class="map-card" style="border-radius: 1.5rem;">
+            <div class="map-grid" style="position: absolute; inset: 0;"></div>
+            {% for pharmacy in pharmacies %}
+                <span class="map-pin" style="top: {{ pharmacy.pin.top }}; left: {{ pharmacy.pin.left }};"></span>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}
