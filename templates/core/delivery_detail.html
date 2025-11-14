@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="card">
+    <div class="section-title">
+        <div>
+            <h2>{{ task.code }}</h2>
+            <span>{{ task.get_status_display }} · {{ task.eta_text }}</span>
+        </div>
+        <a class="btn-outline" href="{% url 'distributor_dashboard' %}">← Back to deliveries</a>
+    </div>
+    <div class="grid-2">
+        <div>
+            <h3>Delivery details</h3>
+            <p><strong>Pharmacy:</strong> {{ task.pharmacy.name }}</p>
+            <p><strong>Address:</strong> {{ task.address }}</p>
+            <p><strong>Status:</strong> {{ task.get_status_display }}</p>
+            <p><strong>ETA:</strong> {{ task.eta_text }}</p>
+        </div>
+        <div class="map-card map-card--embed" style="min-height: 300px;">
+            <iframe
+                title="Map for {{ task.address }}"
+                loading="lazy"
+                allowfullscreen
+                referrerpolicy="no-referrer-when-downgrade"
+                src="https://www.google.com/maps?q={{ task.address|urlencode }}&output=embed">
+            </iframe>
+        </div>
+    </div>
+</section>
+{% endblock %}

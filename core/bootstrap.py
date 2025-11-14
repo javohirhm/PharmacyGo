@@ -157,6 +157,7 @@ def ensure_seed_records():
                 name=stock["name"],
                 quantity=stock["qty"],
                 status=stock["status"],
+                expires_in_days=stock.get("expires_in_days", 30),
             )
 
     if not DeliveryTask.objects.exists():

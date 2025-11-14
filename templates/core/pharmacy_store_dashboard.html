@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="card">
+    <div class="section-title">
+        <h2>Stock health</h2>
+        <span>Track medicine levels</span>
+    </div>
+    <details class="card card-inline-form" {% if stock_form.errors %}open{% endif %}>
+        <summary>Add SKU</summary>
+        <form method="post" action="{% url 'pharmacy_store_dashboard' %}" class="card-form-grid">
+            {% csrf_token %}
+            <input type="hidden" name="form" value="stock-item">
+            {% if stock_form.non_field_errors %}
+                <div class="form-error">{{ stock_form.non_field_errors.0 }}</div>
+            {% endif %}
+            {% for field in stock_form %}
+                <div class="input-field">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <div class="form-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            <div class="input-field" style="flex-basis: 100%;">
+                <button class="btn-primary" type="submit">Save SKU</button>
+            </div>
+        </form>
+    </details>
+    <div class="table-shell scroll-shell">
+        <table>
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>Medicine</th>
+                    <th>Qty</th>
+                    <th>Status</th>
+                    <th>Expires (days)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in stock %}
+                    <tr>
+                        <td>{{ item.sku }}</td>
+                        <td>{{ item.name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.status }}</td>
+                        <td>{{ item.expires_in_days }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="5">Add SKUs to track inventory.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="card">
+    <div class="section-title">
+        <h2>Expiration tracker</h2>
+        <span>Monitor pills nearing expiry</span>
+    </div>
+    <div class="pill-filter-group">
+        <a class="pill-filter{% if not expiry_threshold %} active{% endif %}" href="{% url 'pharmacy_store_dashboard' %}">All</a>
+        {% for option in expiry_options %}
+            <a class="pill-filter{% if expiry_threshold == option.value %} active{% endif %}" href="{% url 'pharmacy_store_dashboard' %}?expires={{ option.value }}">{{ option.label }}</a>
+        {% endfor %}
+    </div>
+    <div class="table-shell scroll-shell">
+        <table>
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>Medicine</th>
+                    <th>Qty</th>
+                    <th>Status</th>
+                    <th>Expires (days)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in filtered_stock %}
+                    <tr>
+                        <td>{{ item.sku }}</td>
+                        <td>{{ item.name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.status }}</td>
+                        <td>{{ item.expires_in_days }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="5">No medicines in this window.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

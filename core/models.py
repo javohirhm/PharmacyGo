@@ -8,9 +8,9 @@ from django.urls import reverse
 class Profile(models.Model):
     class Role(models.TextChoices):
         ADMIN = "admin", "Admin"
-        DOCTOR = "doctor", "Doctor"
         CUSTOMER = "customer", "Customer"
         DISTRIBUTOR = "distributor", "Distributor"
+        PHARMACY = "pharmacy", "Pharmacy store"
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile")
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.CUSTOMER)
@@ -160,6 +160,7 @@ class StockItem(TimeStampedModel):
     name = models.CharField(max_length=255)
     quantity = models.PositiveIntegerField(default=0)
     status = models.CharField(max_length=64, default="Healthy")
+    expires_in_days = models.PositiveIntegerField(default=30)
 
     def __str__(self):
         return self.name

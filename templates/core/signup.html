@@ -86,7 +86,7 @@
             }
             const setVisibility = (role, labelText) => {
                 const isCustomer = role === 'customer';
-                const isDistributor = role === 'distributor';
+                const isStore = role === 'pharmacy';
                 if (phoneField) {
                     phoneField.style.display = isCustomer ? '' : 'none';
                 }
@@ -100,10 +100,10 @@
                     emailInput.required = !isCustomer;
                 }
                 if (orgField) {
-                    orgField.style.display = isDistributor ? '' : 'none';
+                    orgField.style.display = isStore ? '' : 'none';
                 }
                 if (orgInput) {
-                    orgInput.required = isDistributor;
+                    orgInput.required = isStore;
                 }
                 if (submitBtn) {
                     const label = (labelText || role).toLowerCase();

@@ -62,9 +62,9 @@ class SignUpForm(StyledFormMixin, forms.Form):
             self.add_error("phone", "Customers must sign up with a phone number.")
         if role != Profile.Role.CUSTOMER and not email:
             self.add_error("email", "Doctors, admins, and distributors must use a work email.")
-        if role == Profile.Role.DISTRIBUTOR and not organization:
-            self.add_error("organization", "Distributors must list an organization or fleet name.")
-        if role != Profile.Role.DISTRIBUTOR:
+        if role == Profile.Role.PHARMACY and not organization:
+            self.add_error("organization", "Pharmacy stores must list an organization or location name.")
+        if role != Profile.Role.PHARMACY:
             cleaned["organization"] = ""
 
         identifier = phone if role == Profile.Role.CUSTOMER else email
@@ -98,7 +98,7 @@ class SignUpForm(StyledFormMixin, forms.Form):
         profile = user.profile
         profile.role = role
         profile.phone = phone
-        profile.organization = organization if role == Profile.Role.DISTRIBUTOR else ""
+        profile.organization = organization if role == Profile.Role.PHARMACY else ""
         profile.save()
         return user
 
@@ -129,18 +129,20 @@ class PaymentCardForm(StyledFormMixin, forms.ModelForm):
 class StockItemForm(StyledFormMixin, forms.ModelForm):
     class Meta:
         model = StockItem
-        fields = ["sku", "name", "quantity", "status"]
+        fields = ["sku", "name", "quantity", "status", "expires_in_days"]
         labels = {
             "sku": "SKU",
             "name": "Medicine",
             "quantity": "Qty",
             "status": "Status",
+            "expires_in_days": "Days till expiry",
         }
         widgets = {
             "sku": forms.TextInput(attrs={"placeholder": "AMX-500"}),
             "name": forms.TextInput(attrs={"placeholder": "Amoxil 500mg"}),
             "quantity": forms.NumberInput(attrs={"min": 0}),
             "status": forms.TextInput(attrs={"placeholder": "Healthy"}),
+            "expires_in_days": forms.NumberInput(attrs={"min": 1, "placeholder": "45"}),
         }
 
     def __init__(self, *args, **kwargs):

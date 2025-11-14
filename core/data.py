@@ -18,9 +18,9 @@ ADMIN_USERS = {
         {"name": "Laylo Karimova", "phone": "+998 90 112 33 44", "orders": 12},
         {"name": "Umid Abdullaev", "phone": "+998 97 223 54 11", "orders": 5},
     ],
-    "doctors": [
-        {"name": "Dr. Saodat Bek", "email": "saodat@pharmacygo.uz", "patients": 34},
-        {"name": "Dr. Kamol Idris", "email": "kamol@pharmacygo.uz", "patients": 21},
+    "stores": [
+        {"name": "PharmaLife Downtown", "email": "store@pharmalife.uz", "stock": 640},
+        {"name": "CarePoint Sergeli", "email": "ops@carepoint.uz", "stock": 410},
     ],
     "distributors": [
         {"name": "Flow Logistics", "email": "ops@flow.uz", "fleet": 18},
@@ -80,9 +80,9 @@ CUSTOMER_NOTIFICATIONS = [
 ]
 
 DISTRIBUTOR_STOCK = [
-    {"sku": "AMX-500", "name": "Amoxil 500mg", "qty": 320, "status": "Healthy"},
-    {"sku": "GLC-20", "name": "Glucophage XR", "qty": 110, "status": "Watch"},
-    {"sku": "XYZ-5", "name": "Xyzal 5mg", "qty": 540, "status": "Healthy"},
+    {"sku": "AMX-500", "name": "Amoxil 500mg", "qty": 320, "status": "Healthy", "expires_in_days": 45},
+    {"sku": "GLC-20", "name": "Glucophage XR", "qty": 110, "status": "Watch", "expires_in_days": 18},
+    {"sku": "XYZ-5", "name": "Xyzal 5mg", "qty": 540, "status": "Healthy", "expires_in_days": 90},
 ]
 
 DISTRIBUTOR_TASKS = [
@@ -105,9 +105,9 @@ DISTRIBUTOR_STATUS_BOARD = [
 
 AUTH_ROLES = [
     {"name": "Admin", "description": "Manage platform health & approvals"},
-    {"name": "Doctor", "description": "Review prescriptions & chat"},
     {"name": "Customer", "description": "Order medicines & pay securely"},
-    {"name": "Distributor", "description": "Deliver and update stock"},
+    {"name": "Distributor", "description": "Deliver and update routes"},
+    {"name": "Pharmacy store", "description": "Maintain inventory & expirations"},
 ]
 
 CURRENT_YEAR = datetime.now().year

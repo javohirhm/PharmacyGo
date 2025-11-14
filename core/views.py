@@ -1,4 +1,3 @@
-from datetime import datetime
 from functools import wraps
 
 from django.contrib import messages
@@ -12,17 +11,14 @@ from . import data
 from .bootstrap import ensure_seed_records
 from .forms import IdentifierAuthenticationForm, PaymentCardForm, SignUpForm, StockItemForm
 from .models import (
-    ChatMessage,
     DeliveryTask,
     DistributorStatus,
     Notification,
     Order,
-    Patient,
     PaymentCard,
     PaymentProvider,
     Pharmacy,
     PharmacyApplication,
-    PrescriptionRequest,
     Profile,
     StockItem,
     TimelineEvent,
@@ -31,9 +27,9 @@ from .models import (
 
 ROLE_TO_URL = {
     Profile.Role.ADMIN: "admin_dashboard",
-    Profile.Role.DOCTOR: "doctor_dashboard",
     Profile.Role.CUSTOMER: "customer_dashboard",
     Profile.Role.DISTRIBUTOR: "distributor_dashboard",
+    Profile.Role.PHARMACY: "pharmacy_store_dashboard",
 }
 
 
@@ -145,7 +141,7 @@ def admin_dashboard(request):
     applications = PharmacyApplication.objects.order_by("-created_at")[:5]
     user_segments = {
         "customers": _segment_profiles(Profile.Role.CUSTOMER)[:5],
-        "doctors": _segment_profiles(Profile.Role.DOCTOR)[:5],
+        "stores": _segment_profiles(Profile.Role.PHARMACY)[:5],
         "distributors": _segment_profiles(Profile.Role.DISTRIBUTOR)[:5],
     }
     context = _context(
@@ -158,19 +154,6 @@ def admin_dashboard(request):
         admin_change_url=_admin_change_url,
     )
     return render(request, "core/admin_dashboard.html", context)
-
-
-@role_required(Profile.Role.DOCTOR)
-def doctor_dashboard(request):
-    ensure_seed_records()
-    context = _context(
-        request,
-        page_title="Doctor workspace",
-        prescriptions=PrescriptionRequest.objects.order_by("status", "-created_at"),
-        chat=ChatMessage.objects.order_by("sent_at"),
-        patients=Patient.objects.all(),
-    )
-    return render(request, "core/doctor_dashboard.html", context)
 
 
 @role_required(Profile.Role.CUSTOMER)
@@ -198,18 +181,48 @@ def customer_dashboard(request):
     return render(request, "core/customer_dashboard.html", context)
 
 
-@role_required(Profile.Role.DISTRIBUTOR)
-def distributor_dashboard(request):
+@role_required(Profile.Role.PHARMACY)
+def pharmacy_store_dashboard(request):
     ensure_seed_records()
     stock_form = StockItemForm()
     if request.method == "POST" and request.POST.get("form") == "stock-item":
         stock_form = StockItemForm(request.POST)
         if stock_form.is_valid():
             stock_form.save()
-            messages.success(request, "SKU added to stock health.")
-            return redirect("distributor_dashboard")
-        messages.error(request, "Please correct the stock form errors.")
+            messages.success(request, "SKU saved to stock health.")
+            return redirect("pharmacy_store_dashboard")
+        messages.error(request, "Please fix the stock form errors.")
 
+    expires_param = request.GET.get("expires")
+    expiry_threshold = None
+    filtered_stock = StockItem.objects.all().order_by("expires_in_days", "name")
+    if expires_param:
+        try:
+            expiry_threshold = int(expires_param)
+            filtered_stock = filtered_stock.filter(expires_in_days__lte=expiry_threshold)
+        except ValueError:
+            expiry_threshold = None
+    expiry_options = [
+        {"value": 30, "label": "30 days"},
+        {"value": 10, "label": "10 days"},
+        {"value": 90, "label": "3 months"},
+    ]
+
+    context = _context(
+        request,
+        page_title="Pharmacy store inventory",
+        stock=StockItem.objects.order_by("-updated_at"),
+        stock_form=stock_form,
+        expiry_options=expiry_options,
+        expiry_threshold=expiry_threshold,
+        filtered_stock=filtered_stock,
+    )
+    return render(request, "core/pharmacy_store_dashboard.html", context)
+
+
+@role_required(Profile.Role.DISTRIBUTOR)
+def distributor_dashboard(request):
+    ensure_seed_records()
     status_options = []
     seen = set()
     preset_statuses = ["Awaiting pickup", "In progress", "Delivered", "Delayed"]
@@ -222,11 +235,9 @@ def distributor_dashboard(request):
     context = _context(
         request,
         page_title="Distributor ops",
-        stock=StockItem.objects.all(),
         tasks=DeliveryTask.objects.select_related("pharmacy").all(),
         timeline=TimelineEvent.objects.order_by("created_at"),
         status_board=DistributorStatus.objects.all(),
-        stock_form=stock_form,
         status_options=status_options,
     )
     return render(request, "core/distributor_dashboard.html", context)
@@ -292,34 +303,6 @@ def application_action(request, pk, action):
     return _redirect_back(request, "admin_dashboard")
 
 
-@role_required(Profile.Role.DOCTOR)
-def prescription_action(request, pk, action):
-    prescription = get_object_or_404(PrescriptionRequest, pk=pk)
-    if request.method == "POST":
-        if action == "approve":
-            prescription.status = PrescriptionRequest.Status.APPROVED
-        elif action == "reject":
-            prescription.status = PrescriptionRequest.Status.REJECTED
-        prescription.save()
-        messages.success(request, f"{prescription.patient_name}'s prescription updated.")
-    return _redirect_back(request, "doctor_dashboard")
-
-
-@role_required(Profile.Role.DOCTOR)
-def doctor_chat_message(request):
-    if request.method == "POST":
-        body = request.POST.get("message", "").strip()
-        if body:
-            ChatMessage.objects.create(
-                sender=ChatMessage.Sender.DOCTOR,
-                author=request.user.get_full_name() or "Doctor",
-                body=body,
-                sent_at=datetime.now().time(),
-            )
-            messages.success(request, "Message sent to patient.")
-    return _redirect_back(request, "doctor_dashboard")
-
-
 @role_required(Profile.Role.DISTRIBUTOR)
 def delivery_task_action(request, pk, action):
     task = get_object_or_404(DeliveryTask, pk=pk)
@@ -376,6 +359,18 @@ def pharmacy_detail(request, pk):
         recent_orders=pharmacy.orders.order_by("-created_at")[:5],
     )
     return render(request, "core/pharmacy_detail.html", context)
+
+
+@role_required(Profile.Role.DISTRIBUTOR)
+def delivery_detail(request, pk):
+    ensure_seed_records()
+    task = get_object_or_404(DeliveryTask.objects.select_related("pharmacy"), pk=pk)
+    context = _context(
+        request,
+        page_title=f"{task.code} · Delivery detail",
+        task=task,
+    )
+    return render(request, "core/delivery_detail.html", context)
 
 
 @role_required(Profile.Role.DISTRIBUTOR)

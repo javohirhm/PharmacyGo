@@ -83,7 +83,7 @@ class NotificationAdmin(admin.ModelAdmin):
 
 @admin.register(StockItem)
 class StockItemAdmin(admin.ModelAdmin):
-    list_display = ("sku", "name", "quantity", "status")
+    list_display = ("sku", "name", "quantity", "status", "expires_in_days")
     search_fields = ("sku", "name")
 
 

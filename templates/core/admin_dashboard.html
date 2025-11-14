@@ -109,7 +109,7 @@
         <section id="users" class="card">
             <div class="section-title">
                 <h2>User management</h2>
-                <span>Customers · Doctors · Distributors</span>
+                <span>Customers · Stores · Distributors</span>
             </div>
             <div class="grid-3">
                 <div>
@@ -131,18 +131,18 @@
                     </div>
                 </div>
                 <div>
-                    <h3>Doctors</h3>
+                    <h3>Pharmacy stores</h3>
                     <div class="table-shell">
                         <table>
                             <tbody>
-                                {% for doctor in user_segments.doctors %}
+                                {% for store in user_segments.stores %}
                                     <tr>
-                                        <td><strong>{{ doctor.name }}</strong><br><small>{{ doctor.contact }}</small></td>
-                                        <td>{{ doctor.meta }}</td>
-                                        <td><a class="btn-outline" href="{{ doctor.admin_url }}">Assign</a></td>
+                                        <td><strong>{{ store.name }}</strong><br><small>{{ store.contact }}</small></td>
+                                        <td>{{ store.meta }}</td>
+                                        <td><a class="btn-outline" href="{{ store.admin_url }}">Assign</a></td>
                                     </tr>
                                 {% empty %}
-                                    <tr><td colspan="3">Add doctors from admin.</td></tr>
+                                    <tr><td colspan="3">Invite stores via admin.</td></tr>
                                 {% endfor %}
                             </tbody>
                         </table>
